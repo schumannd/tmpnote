@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Create encrypted notes that self-destruct after being read."
+    />
+    <title>tmpnote — self-destructing notes</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Manrope:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/styles.css" />
+    <script src="config.js"></script>
+  </head>
+  <body>
+    <div class="atmosphere" aria-hidden="true"></div>
+    <div class="app">
+      <header class="top">
+        <a class="brand" href="#/" id="brand-link">tmpnote</a>
+        <p class="tagline">Encrypted notes that vanish after one read</p>
+      </header>
+
+      <main id="view" class="view" aria-live="polite"></main>
+
+      <footer class="foot">
+        <p>
+          Keys stay in your browser. Ciphertext only is stored when an API is
+          configured.
+        </p>
+      </footer>
+    </div>
+    <script type="module" src="js/app.js"></script>
+  </body>
+</html>

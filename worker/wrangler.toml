@@ -1,0 +1,13 @@
+name = "tmpnote-api"
+main = "src/index.js"
+compatibility_date = "2026-07-01"
+
+# Create a KV namespace, then paste the id here:
+#   npx wrangler kv namespace create TMPNOTE_NOTES
+[[kv_namespaces]]
+binding = "NOTES"
+id = "REPLACE_WITH_KV_NAMESPACE_ID"
+
+[vars]
+# Comma-separated allowed Origins for CORS (your GitHub Pages URL)
+ALLOWED_ORIGINS = "http://127.0.0.1:8787,http://localhost:8787"

@@ -1,0 +1,13 @@
+{
+  "name": "tmpnote",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Encrypted self-destructing notes — static frontend for GitHub Pages",
+  "scripts": {
+    "dev": "node server/local-api.mjs",
+    "deploy:worker": "cd worker && npx wrangler deploy"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
