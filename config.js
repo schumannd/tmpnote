@@ -2,7 +2,7 @@
 // Leave empty ("") to use URL-embedded mode only (fully static, no server).
 window.TMPNOTE_CONFIG = {
   // Example: "https://tmpnote-api.your-subdomain.workers.dev"
-  apiBase: "",
+  apiBase: "https://tmpnote.workers.dev",
   // Max plaintext length (chars)
   maxNoteLength: 10000,
   // Default TTL in seconds when using the API (Durable Object expiration)
