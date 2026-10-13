@@ -302,4 +302,13 @@ function route() {
 }
 
 window.addEventListener("hashchange", route);
+// replaceState scrubs a consumed link without triggering hashchange. Home links
+// must still render the form when the address is already #/.
+document.addEventListener("click", (event) => {
+  const link = event.target.closest?.('a[href="#/"]');
+  if (!link || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+  event.preventDefault();
+  history.replaceState(null, "", `${basePath()}#/`);
+  renderHome();
+});
 route();
