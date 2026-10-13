@@ -32,6 +32,7 @@ function sendJson(res, status, data, extraHeaders = {}) {
   const body = JSON.stringify(data);
   res.writeHead(status, {
     "content-type": "application/json; charset=utf-8",
+    "cache-control": "no-store",
     "access-control-allow-origin": "*",
     "access-control-allow-methods": "GET, POST, OPTIONS",
     "access-control-allow-headers": "content-type",
@@ -118,7 +119,7 @@ const server = http.createServer(async (req, res) => {
   }
 
   const readMatch = url.pathname.match(/^\/notes\/([a-f0-9]+)$/i);
-  if (req.method === "GET" && readMatch) {
+  if (req.method === "POST" && readMatch) {
     const id = readMatch[1].toLowerCase();
     const note = notes.get(id);
     if (!note || note.expiresAt <= Date.now()) {

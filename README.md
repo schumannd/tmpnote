@@ -1,13 +1,13 @@
 # tmpnote
 
-Encrypted, self-destructing notes in the browser. The UI is a static site you can host on **GitHub Pages**. Optional Cloudflare Worker storage gives true burn-after-read.
+Encrypted, self-destructing notes in the browser. The UI is a static site you can host on **GitHub Pages**. Cloudflare Worker storage provides at-most-once retrieval.
 
 ## How it works
 
 1. Your note is encrypted in the browser with **AES-256-GCM** (Web Crypto).
 2. The decryption key stays in the URL `#fragment` and is never sent to a server.
 3. Only ciphertext is stored (when an API is configured).
-4. Opening the link fetches the ciphertext once; the API deletes it immediately.
+4. Clicking “Reveal and destroy” retrieves the ciphertext once; the API atomically deletes it.
 
 Without an API, **URL mode** packs the ciphertext into the link itself. That runs fully on GitHub Pages, but the link can be opened more than once.
 
@@ -33,8 +33,6 @@ Edit `config.js` after you have an API URL (below).
 ```bash
 cd worker
 npx wrangler login
-npx wrangler kv namespace create TMPNOTE_NOTES
-# paste the id into wrangler.toml under kv_namespaces.id
 # set ALLOWED_ORIGINS to your Pages URL, e.g.
 #   https://youruser.github.io
 npx wrangler deploy
@@ -60,7 +58,7 @@ Commit and push so Pages picks up the config.
 |---|---|
 | `index.html`, `css/`, `js/` | Static app (Pages) |
 | `config.js` | `apiBase`, limits, defaults |
-| `worker/` | Cloudflare Worker + KV |
+| `worker/` | Cloudflare Worker + Durable Objects |
 | `server/local-api.mjs` | Local static + API for development |
 | `IMPLEMENTATION_PLAN.md` | Design and roadmap |
 

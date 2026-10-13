@@ -1,3 +1,5 @@
+import { DurableObject } from "cloudflare:workers";
+
 const MAX_PAYLOAD_BYTES = 64_000;
 const MAX_TTL = 60 * 60 * 24 * 30;
 const MIN_TTL = 60;
@@ -9,6 +11,7 @@ function json(data, status = 200, headers = {}) {
     status,
     headers: {
       "content-type": "application/json; charset=utf-8",
+      "cache-control": "no-store",
       ...headers,
     },
   });
@@ -87,36 +90,21 @@ export default {
           payload: body.payload,
           createdAt: Date.now(),
         };
-        await env.NOTES.put(id, JSON.stringify(record), {
-          expirationTtl: ttl,
+        const note = env.NOTES.get(env.NOTES.idFromName(id));
+        await note.fetch("https://note.internal/", {
+          method: "POST",
+          body: JSON.stringify({ ...record, expiresAt: Date.now() + ttl * 1000 }),
         });
         return withCors(json({ id, ttlSeconds: ttl }, 201), request, env);
       }
 
-      const readMatch = url.pathname.match(/^\/notes\/([a-f0-9]+)$/i);
-      if (request.method === "GET" && readMatch) {
+      const readMatch = url.pathname.match(/^\/notes\/([a-f0-9]{32})$/i);
+      if (request.method === "POST" && readMatch) {
         const id = readMatch[1].toLowerCase();
-        const raw = await env.NOTES.get(id);
-        if (!raw) {
-          return withCors(
-            json({ error: "Note not found or already destroyed" }, 404),
-            request,
-            env
-          );
-        }
-        // Burn immediately — race-friendly enough for a personal tool
-        await env.NOTES.delete(id);
-        let record;
-        try {
-          record = JSON.parse(raw);
-        } catch {
-          return withCors(json({ error: "Corrupt note" }, 500), request, env);
-        }
-        return withCors(
-          json({ payload: record.payload, createdAt: record.createdAt }),
-          request,
-          env
-        );
+        const note = env.NOTES.get(env.NOTES.idFromName(id));
+        return withCors(await note.fetch("https://note.internal/consume", {
+          method: "POST",
+        }), request, env);
       }
 
       return withCors(json({ error: "Not found" }, 404), request, env);
@@ -129,3 +117,35 @@ export default {
     }
   },
 };
+
+
+// Each note has its own object. Consume is one synchronous storage transaction.
+export class Note extends DurableObject {
+  async fetch(request) {
+    const path = new URL(request.url).pathname;
+    if (request.method === "POST" && path === "/") {
+      const record = await request.json();
+      await this.ctx.storage.put("note", record);
+      await this.ctx.storage.setAlarm(record.expiresAt);
+      return json({ ok: true }, 201);
+    }
+    if (request.method === "POST" && path === "/consume") {
+      const record = this.ctx.storage.transactionSync(() => {
+        const value = this.ctx.storage.kv.get("note");
+        this.ctx.storage.kv.delete("note");
+        return value;
+      });
+      await this.ctx.storage.deleteAll();
+      await this.ctx.storage.deleteAlarm();
+      if (!record || record.expiresAt <= Date.now()) {
+        return json({ error: "This note was already read or has expired." }, 404);
+      }
+      return json({ payload: record.payload, createdAt: record.createdAt });
+    }
+    return json({ error: "Not found" }, 404);
+  }
+
+  async alarm() {
+    await this.ctx.storage.deleteAll();
+  }
+}

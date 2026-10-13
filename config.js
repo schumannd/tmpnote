@@ -5,7 +5,7 @@ window.TMPNOTE_CONFIG = {
   apiBase: "",
   // Max plaintext length (chars)
   maxNoteLength: 10000,
-  // Default TTL in seconds when using the API (KV expiration)
+  // Default TTL in seconds when using the API (Durable Object expiration)
   defaultTtlSeconds: 60 * 60 * 24 * 7,
   siteName: "tmpnote",
 };

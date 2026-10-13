@@ -25,7 +25,7 @@ export async function burnRemoteNote(id) {
   const base = apiBase();
   if (!base) throw new Error("API is not configured");
   const res = await fetch(`${base}/notes/${encodeURIComponent(id)}`, {
-    method: "GET",
+    method: "POST",
   });
   const data = await res.json().catch(() => ({}));
   if (res.status === 404) {

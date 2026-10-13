@@ -2,7 +2,7 @@
 
 ## Goal
 
-A small web app for creating encrypted, self-destructing notes. The UI is a static site suitable for **GitHub Pages**. True burn-after-read needs a tiny storage API (Cloudflare Worker + KV); a zero-backend **URL mode** still works fully on Pages for demos and short notes.
+A small web app for creating encrypted, self-destructing notes. The UI is a static site suitable for **GitHub Pages**. At-most-once retrieval needs a tiny storage API (Cloudflare Worker + Durable Objects); a zero-backend **URL mode** still works fully on Pages for demos and short notes.
 
 ## Constraints
 
@@ -18,7 +18,7 @@ A small web app for creating encrypted, self-destructing notes. The UI is a stat
 ```
 ┌─────────────────────┐     ciphertext only      ┌──────────────────────┐
 │  Browser (Pages)    │ ───────────────────────► │  Cloudflare Worker   │
-│  Web Crypto AES-GCM │ ◄─────────────────────── │  + KV (id → blob)    │
+│  Web Crypto AES-GCM │ ◄─────────────────────── │  + Durable Objects    │
 │  key stays in #hash │     delete-on-read       └──────────────────────┘
 └─────────────────────┘
 ```
@@ -31,7 +31,7 @@ A small web app for creating encrypted, self-destructing notes. The UI is a stat
 4. Client `POST`s **only ciphertext + metadata** (TTL, createdAt) to the API.
 5. API returns a short `id`.
 6. Share URL: `https://user.github.io/tmpnote/#/n/<id>~<key>`.
-7. On open: client loads ciphertext by `id`, decrypts with key from the fragment, then API deletes the record (or returns 404 on a second fetch).
+7. On reveal: client loads ciphertext by `id`, decrypts with key from the fragment, with atomic deletion at retrieval (or returns 404 on a second fetch).
 
 The server never sees plaintext or the key.
 
@@ -39,7 +39,7 @@ The server never sees plaintext or the key.
 
 | Mode | When | Behavior |
 |---|---|---|
-| **API** (default when configured) | `config.js` has `apiBase` | True burn-after-read + optional TTL |
+| **API** (default when configured) | `config.js` has `apiBase` | At-most-once retrieval + optional TTL |
 | **URL** (fallback / demo) | No `apiBase`, or note fits in URL | Ciphertext lives in the hash; no server. Multiple opens still work; “destroy” is UI-only after view |
 
 ## Phases
@@ -56,9 +56,9 @@ The server never sees plaintext or the key.
 
 ### Phase 2 — Burn-after-read API
 
-- [x] Cloudflare Worker: `POST /notes`, `GET /notes/:id` (delete after read)
-- [x] KV binding for ciphertext
-- [x] Optional TTL via KV expiration
+- [x] Cloudflare Worker: `POST /notes`, `POST /notes/:id` (delete after read)
+- [x] SQLite-backed Durable Object binding for ciphertext
+- [x] Optional TTL via Durable Object alarms
 - [x] CORS for the Pages origin
 - [x] Local in-memory server mirroring the Worker for `npm run dev`
 
@@ -98,7 +98,7 @@ tmpnote/
 ## Deploy sequence
 
 1. Push repo to GitHub; enable Pages (Actions).
-2. Create a KV namespace; set `id` in `worker/wrangler.toml`.
+2. Use the Durable Object binding and migration in `worker/wrangler.toml`.
 3. `cd worker && npx wrangler deploy`; note the `*.workers.dev` URL.
 4. Set `apiBase` in `config.js` to that URL; commit & push.
 5. Restrict Worker CORS to the Pages origin.

@@ -218,6 +218,19 @@ async function renderNote(token, key) {
         );
       }
       status.textContent = "Fetching & burning ciphertext…";
+      view.innerHTML = `
+        <section class="panel">
+          <h1>Private note</h1>
+          <p class="lede">Revealing this note permanently consumes the link.</p>
+          <button type="button" class="btn-primary" id="reveal-btn">Reveal and destroy</button>
+        </section>
+      `;
+      await new Promise((resolve) => {
+        document.getElementById("reveal-btn").addEventListener("click", (event) => {
+          event.target.disabled = true;
+          resolve();
+        }, { once: true });
+      });
       const data = await burnRemoteNote(token);
       payload = data.payload;
       burned = true;
