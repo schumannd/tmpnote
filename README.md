@@ -46,6 +46,25 @@ apiBase: "https://tmpnote-api.<your-subdomain>.workers.dev",
 
 Commit and push so Pages picks up the config.
 
+## Automatic Worker deployment
+
+The `.github/workflows/worker.yml` workflow deploys Worker changes on pushes to
+`main` or `master`, and supports manual runs from GitHub Actions.
+
+One-time setup:
+
+1. Create a Cloudflare API token at https://dash.cloudflare.com/profile/api-tokens
+   using the **Edit Cloudflare Workers** template, scoped to your account.
+2. Copy your Account ID from your account's **Workers & Pages** overview.
+3. At https://github.com/schumannd/tmpnote/settings/secrets/actions, create repository
+   secrets named `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`.
+4. Push the workflow, or manually run **Deploy Cloudflare Worker** from Actions.
+
+The workflow verifies API health and CORS after deployment. The existing Pages
+workflow continues to publish frontend changes. Never put the API token in files
+or chat. If this execution environment cannot push, push from your Mac terminal;
+deployment then runs on GitHub without a local Wrangler login.
+
 ## Security notes
 
 - The host never sees plaintext when encryption works as designed.
